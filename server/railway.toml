@@ -1,0 +1,9 @@
+[build]
+command = "npm install"
+
+[deploy]
+startCommand = "node index.js"
+restartPolicyType = "never"
+
+[env]
+NODE_ENV = "production" 
