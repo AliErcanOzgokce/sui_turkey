@@ -1,0 +1,315 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern Dark Theme */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%) !important;
+  color: #ffffff !important;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+#root {
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%) !important;
+  color: #ffffff !important;
+  min-height: 100vh;
+}
+
+/* Modal/Popup Overrides for Sui dApp Kit */
+[data-radix-portal] {
+  background-color: rgba(10, 10, 10, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+[data-radix-portal] * {
+  background-color: #1f1f1f !important;
+  color: #ffffff !important;
+  border-color: #333333 !important;
+}
+
+/* Connect Button Styling */
+button[data-testid="connect-button"] {
+  background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+}
+
+/* Wallet Kit Modal Overrides */
+.wallet-kit-modal {
+  background: #1f1f1f !important;
+  border: 1px solid #333333 !important;
+  color: #ffffff !important;
+}
+
+.wallet-kit-modal * {
+  background-color: transparent !important;
+  color: #ffffff !important;
+}
+
+/* Components */
+.minimal-card {
+  background: linear-gradient(145deg, #1a1a1a 0%, #2a2a2a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.discord-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%) !important;
+  color: white !important;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.3);
+}
+
+.discord-btn:hover {
+  background: linear-gradient(135deg, #4752C4 0%, #3b4399 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+}
+
+.discord-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 100%) !important;
+  color: #888888 !important;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.step-circle.active {
+  background: linear-gradient(135deg, #5865F2 0%, #4752C4 100%) !important;
+  color: white !important;
+  border-color: #5865F2;
+  box-shadow: 0 0 20px rgba(88, 101, 242, 0.5);
+}
+
+.step-circle.done {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  border-color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.badge-success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%) !important;
+  color: #34d399 !important;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
+}
+
+.badge-error {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.1);
+}
+
+.badge-discord {
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.2) 0%, rgba(88, 101, 242, 0.1) 100%) !important;
+  color: #818cf8 !important;
+  border: 1px solid rgba(88, 101, 242, 0.3);
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.1);
+}
+
+/* Layout */
+.full-height {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%) !important;
+}
+
+/* Role Cards - Marine Theme */
+.role-card {
+  background: linear-gradient(145deg, rgba(42, 42, 42, 0.6) 0%, rgba(26, 26, 26, 0.6) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.role-card.eligible {
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.1);
+}
+
+/* Marine-themed role cards */
+.role-card.dolphin.eligible {
+  background: linear-gradient(145deg, rgba(64, 224, 208, 0.1) 0%, rgba(64, 224, 208, 0.05) 100%) !important;
+  border-color: rgba(64, 224, 208, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(64, 224, 208, 0.1);
+}
+
+.role-card.shark.eligible {
+  background: linear-gradient(145deg, rgba(112, 128, 144, 0.1) 0%, rgba(112, 128, 144, 0.05) 100%) !important;
+  border-color: rgba(112, 128, 144, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(112, 128, 144, 0.1);
+}
+
+.role-card.whale.eligible {
+  background: linear-gradient(145deg, rgba(65, 105, 225, 0.1) 0%, rgba(65, 105, 225, 0.05) 100%) !important;
+  border-color: rgba(65, 105, 225, 0.2) !important;
+  box-shadow: 0 4px 16px rgba(65, 105, 225, 0.1);
+}
+
+.role-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Loading spinner */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #5865F2;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Text colors */
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff !important;
+}
+
+p {
+  color: #d1d5db !important;
+}
+
+.text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.text-gray-300 {
+  color: #d1d5db !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+.text-indigo-400 {
+  color: #a78bfa !important;
+}
+
+.text-indigo-300 {
+  color: #c4b5fd !important;
+}
+
+.text-green-400 {
+  color: #34d399 !important;
+}
+
+.text-red-400 {
+  color: #f87171 !important;
+}
+
+/* Progress lines */
+.progress-line {
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1) 0%, rgba(88, 101, 242, 0.8) 100%);
+  border-radius: 1px;
+}
+
+/* Balance Display */
+.balance-display {
+  background: linear-gradient(145deg, rgba(88, 101, 242, 0.1) 0%, rgba(88, 101, 242, 0.05) 100%);
+  border: 1px solid rgba(88, 101, 242, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(88, 101, 242, 0.1);
+}
+
+/* Tailwind overrides */
+.bg-gray-700 {
+  background-color: rgba(75, 85, 99, 0.3) !important;
+}
+
+.bg-indigo-500 {
+  background-color: #5865F2 !important;
+}
+
+.border-gray-800 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.border-gray-700 {
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.border-green-800 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.bg-green-900\/20 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+.bg-gray-800\/20 {
+  background-color: rgba(75, 85, 99, 0.1) !important;
+} 
