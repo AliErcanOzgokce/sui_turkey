@@ -1,4 +1,3 @@
-import { jwtDecode } from "jwt-decode";
 import { UserProfile } from "../types";
 
 // Discord OAuth2 Configuration

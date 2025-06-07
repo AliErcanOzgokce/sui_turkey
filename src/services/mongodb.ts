@@ -23,9 +23,6 @@ function saveStoredUsers(users: Record<string, UserProfile>): void {
   }
 }
 
-// Initialize users storage
-let mockUsers = getStoredUsers();
-
 console.log('Using localStorage for user data storage');
 
 // Mock implementation for development

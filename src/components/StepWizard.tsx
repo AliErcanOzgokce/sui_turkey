@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { ModernModal } from './ModernModal';
 
 export interface WizardStep {
