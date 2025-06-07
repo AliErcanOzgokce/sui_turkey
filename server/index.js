@@ -6,7 +6,20 @@ require('dotenv').config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+
+// CORS configuration for production and development
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000', 
+    'https://sui-turkey.vercel.app',
+    /\.vercel\.app$/
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // Log startup information
 logger.info('🚀 Discord Bot Server Starting...');
