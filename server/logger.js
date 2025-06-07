@@ -12,22 +12,55 @@ const logFormat = winston.format.combine(
   })
 );
 
-// Console format with colors
+// Console format with colors for Railway
 const consoleFormat = winston.format.combine(
-  winston.format.colorize({ all: true }),
   winston.format.timestamp({
     format: 'YYYY-MM-DD HH:mm:ss'
   }),
-  winston.format.printf(({ level, message, timestamp, stack }) => {
-    return `${timestamp} [${level}] ${stack || message}`;
+  winston.format.printf(({ level, message, timestamp, stack, ...meta }) => {
+    let log = `${timestamp} [${level.toUpperCase()}] ${stack || message}`;
+    if (Object.keys(meta).length > 0) {
+      log += ` ${JSON.stringify(meta)}`;
+    }
+    return log;
   })
 );
 
-// Create logs directory if it doesn't exist
+// Create logs directory if it doesn't exist (only in development)
 const fs = require('fs');
+const isProduction = process.env.NODE_ENV === 'production';
 const logsDir = path.join(__dirname, 'logs');
-if (!fs.existsSync(logsDir)) {
+
+if (!isProduction && !fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir);
+}
+
+// Configure transports based on environment
+const transports = [
+  // Always log to console (Railway shows this)
+  new winston.transports.Console({
+    format: consoleFormat,
+    level: process.env.LOG_LEVEL || 'info'
+  })
+];
+
+// Add file transports only in development
+if (!isProduction) {
+  transports.push(
+    new winston.transports.File({
+      filename: path.join(logsDir, 'error.log'),
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+      format: logFormat
+    }),
+    new winston.transports.File({
+      filename: path.join(logsDir, 'combined.log'),
+      maxsize: 5242880, // 5MB
+      maxFiles: 10,
+      format: logFormat
+    })
+  );
 }
 
 // Create Winston logger
@@ -35,40 +68,26 @@ const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
   defaultMeta: { service: 'discord-bot' },
-  transports: [
-    // Write all logs with level 'error' and below to error.log
-    new winston.transports.File({
-      filename: path.join(logsDir, 'error.log'),
-      level: 'error',
-      maxsize: 5242880, // 5MB
-      maxFiles: 5,
-    }),
-    
-    // Write all logs with level 'warn' and below to combined.log
-    new winston.transports.File({
-      filename: path.join(logsDir, 'combined.log'),
-      maxsize: 5242880, // 5MB
-      maxFiles: 10,
-    }),
-    
-    // Write all logs to console
+  transports,
+  
+  // Handle exceptions (console only in production)
+  exceptionHandlers: [
     new winston.transports.Console({
       format: consoleFormat
-    })
-  ],
-  
-  // Handle exceptions
-  exceptionHandlers: [
-    new winston.transports.File({
+    }),
+    ...(isProduction ? [] : [new winston.transports.File({
       filename: path.join(logsDir, 'exceptions.log')
-    })
+    })])
   ],
   
-  // Handle rejections
+  // Handle rejections (console only in production)
   rejectionHandlers: [
-    new winston.transports.File({
+    new winston.transports.Console({
+      format: consoleFormat
+    }),
+    ...(isProduction ? [] : [new winston.transports.File({
       filename: path.join(logsDir, 'rejections.log')
-    })
+    })])
   ]
 });
 
