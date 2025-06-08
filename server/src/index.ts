@@ -103,7 +103,6 @@ async function updateDiscordRoles(discordId: string, newRole: RoleConfig | null)
       const roleToAdd = guild.roles.cache.get(newRole.id);
       if (roleToAdd) {
         await member.roles.add(roleToAdd);
-        logger.info(`✅ Added ${newRole.emoji} ${newRole.name} role to ${member.user.username}`);
       } else {
         throw new Error(`Role not found: ${newRole.name} (${newRole.id})`);
       }

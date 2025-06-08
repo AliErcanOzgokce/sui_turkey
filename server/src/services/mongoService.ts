@@ -137,8 +137,6 @@ class MongoService {
       if (!this.isConnected) {
         throw new Error('MongoDB not connected');
       }
-
-      logger.debug(`💰 Updating token balance for ${discordId}: ${tokenBalance}`);
       
       const user = await User.findOneAndUpdate(
         { discordId },
@@ -146,9 +144,7 @@ class MongoService {
         { new: true }
       ).exec();
 
-      if (user) {
-        logger.info(`✅ Token balance updated for ${user.discordUsername}: ${tokenBalance}`);
-      } else {
+      if (!user) {
         logger.warn(`❌ User not found for Discord ID: ${discordId}`);
       }
 
@@ -164,8 +160,6 @@ class MongoService {
       if (!this.isConnected) {
         throw new Error('MongoDB not connected');
       }
-
-      logger.debug(`🎭 Updating roles for ${discordId}:`, roles);
       
       const user = await User.findOneAndUpdate(
         { discordId },
@@ -173,9 +167,7 @@ class MongoService {
         { new: true }
       ).exec();
 
-      if (user) {
-        logger.info(`✅ Roles updated for ${user.discordUsername}:`, roles);
-      } else {
+      if (!user) {
         logger.warn(`❌ User not found for Discord ID: ${discordId}`);
       }
 

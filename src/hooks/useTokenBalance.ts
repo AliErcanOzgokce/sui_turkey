@@ -1,11 +1,8 @@
 import { useSuiClient, useCurrentAccount } from "@mysten/dapp-kit";
 import { useEffect, useState, useRef } from "react";
-import { getTokenBalance, getRolesByTokenAmount } from "../services/tokenService";
-import { useAuth } from "./AuthContext";
-import { updateUserTokenBalance } from "../services/apiService";
+import { getTokenBalance } from "../services/tokenService";
 
 export function useTokenBalance() {
-  const { authState, updateUser } = useAuth();
   const suiClient = useSuiClient();
   const currentAccount = useCurrentAccount();
   const [balance, setBalance] = useState<number>(0);
@@ -31,27 +28,6 @@ export function useTokenBalance() {
     try {
       const tokenBalance = await getTokenBalance(suiClient, address);
       setBalance(tokenBalance);
-      
-      // If user is authenticated, update their balance via API
-      if (authState.isAuthenticated && authState.user && authState.user.discordId) {
-        try {
-          // Update token balance and roles via API
-          await updateUserTokenBalance(authState.user.discordId, tokenBalance);
-          
-          // Get the roles based on token amount for local state
-          const roles = getRolesByTokenAmount(tokenBalance);
-          
-          // Update user in context with new data
-          await updateUser({ 
-            tokenBalance, 
-            roles,
-          });
-        } catch (apiError) {
-          console.error("Failed to update user balance via API:", apiError);
-          // Don't throw here - we still want to show the balance even if API update fails
-        }
-      }
-      
       return tokenBalance;
     } catch (err) {
       console.error("Error checking token balance:", err);
@@ -70,7 +46,7 @@ export function useTokenBalance() {
     
     // Check balance for currently connected wallet with debounce
     if (currentAccount?.address) {
-      // Debounce the API call to prevent excessive requests
+      // Debounce the balance check to prevent excessive requests
       debounceTimeout.current = setTimeout(() => {
         checkBalance(currentAccount.address);
       }, 300); // 300ms debounce
@@ -85,7 +61,7 @@ export function useTokenBalance() {
         clearTimeout(debounceTimeout.current);
       }
     };
-  }, [currentAccount?.address, suiClient, authState.isAuthenticated]);
+  }, [currentAccount?.address, suiClient]); // Removed authState dependency
 
   return {
     balance,
