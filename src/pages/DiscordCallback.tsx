@@ -13,55 +13,38 @@ export function DiscordCallback() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      console.log("🔍 DiscordCallback: Starting callback handling");
-      
       const code = searchParams.get("code");
       const error = searchParams.get("error");
-      
-      console.log("🔍 DiscordCallback: URL params", { code: code?.substring(0, 10) + '...', error });
 
       if (error) {
-        console.error("❌ DiscordCallback: OAuth error:", error);
         setStatus("error");
         setError("Discord authorization failed");
         return;
       }
 
       if (!code) {
-        console.error("❌ DiscordCallback: No authorization code");
         setStatus("error");
         setError("No authorization code received");
         return;
       }
 
       try {
-        console.log("🚀 DiscordCallback: Calling processDiscordCallback");
-        
         // Exchange code for token and user data via API
         const authResult = await apiService.processDiscordCallback(code);
-        
-        console.log("✅ DiscordCallback: API response received", authResult);
         
         if (!authResult.success || !authResult.user) {
           throw new Error('Failed to authenticate with Discord');
         }
         
-        console.log("🔐 DiscordCallback: Generating JWT");
-        
         // Generate JWT token for frontend
         const jwtToken = generateJWT(authResult.user);
-        
-        console.log("👤 DiscordCallback: Logging in user");
         
         // Login with JWT and user profile
         login(jwtToken, authResult.user);
         
-        console.log("🏠 DiscordCallback: Navigating to home");
-        
         // Navigate to home
         navigate("/");
       } catch (err) {
-        console.error("❌ DiscordCallback: Error during callback", err);
         setStatus("error");
         setError(err instanceof Error ? err.message : "Unknown error");
       }
