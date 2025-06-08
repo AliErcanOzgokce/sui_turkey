@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/AuthContext";
-import { exchangeCodeForToken, getDiscordUser, generateJWT } from "../services/discordService";
-import { createOrUpdateUser } from "../services/mongodb";
+import { exchangeCodeForToken, generateJWT } from "../services/discordService";
 
 export function DiscordCallback() {
   const [searchParams] = useSearchParams();
@@ -29,27 +28,18 @@ export function DiscordCallback() {
       }
 
       try {
-        // Exchange code for access token
-        const tokenData = await exchangeCodeForToken(code);
+        // Exchange code for token and user data via API
+        const authResult = await exchangeCodeForToken(code);
         
-        // Get Discord user info
-        const discordUser = await getDiscordUser(tokenData.access_token);
+        console.log('🔍 Discord OAuth Result:', authResult);
+        console.log('🔍 User data:', authResult.user);
+        console.log('🔍 User discordId:', authResult.user?.discordId);
         
-        // Create or update user in database
-        const userProfile = await createOrUpdateUser({
-          discordId: discordUser.id,
-          discordUsername: `${discordUser.username}#${discordUser.discriminator}`,
-          discordAvatar: discordUser.avatar ? 
-            `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : 
-            null,
-          email: discordUser.email
-        });
-        
-        // Generate JWT token
-        const jwtToken = generateJWT(userProfile);
+        // Generate JWT token for frontend
+        const jwtToken = generateJWT(authResult.user);
         
         // Login with JWT and user profile
-        login(jwtToken, userProfile);
+        login(jwtToken, authResult.user);
         
         // Navigate to home
         navigate("/");

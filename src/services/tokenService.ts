@@ -1,19 +1,35 @@
 import { SuiClient } from "@mysten/sui/client";
-import { DiscordRole, TokenBalance } from "../types";
 
-// TR_WAL token type
+// TR_WAL Token Configuration
 const TR_WAL_TYPE = "0xa8ad8c2720f064676856f4999894974a129e3d15386b3d0a27f3a7f85811c64a::tr_wal::TR_WAL";
+const TOKEN_DECIMALS = 1_000_000_000; // 9 decimals
 
-// Token decimals (10^9)
-const TOKEN_DECIMALS = 1_000_000_000;
+// Role thresholds
+const ROLE_THRESHOLDS = {
+  DOLPHIN: 100,
+  SHARK: 1000,
+  WHALE: 10000,
+};
 
-// Discord roles configuration - Updated to marine theme
-export const DISCORD_ROLES: DiscordRole[] = [
+// Discord roles configuration - Marine theme
+export const DISCORD_ROLES = [
   { id: "dolphin", name: "🐬 Dolphin", requiredTokens: 100 },
   { id: "shark", name: "🦈 Shark", requiredTokens: 1000 },
   { id: "whale", name: "🐳 Whale", requiredTokens: 10000 }
 ];
 
+export interface TokenBalance {
+  objectId: string;
+  balance: number;
+}
+
+export interface RoleInfo {
+  name: string;
+  emoji: string;
+  threshold: number;
+}
+
+// Get total token balance for an address using getCoins API
 export async function getTokenBalance(suiClient: SuiClient, address: string): Promise<number> {
   try {
     // Get all coin objects owned by the address
@@ -29,28 +45,57 @@ export async function getTokenBalance(suiClient: SuiClient, address: string): Pr
     );
 
     // Convert to number and divide by decimals to get human-readable amount
-    return Number(totalBalance) / TOKEN_DECIMALS;
+    const humanReadableBalance = Number(totalBalance) / TOKEN_DECIMALS;
+    
+    return humanReadableBalance;
   } catch (error) {
-    console.error("Error fetching token balance:", error);
+    console.error("❌ Error getting token balance:", error);
     return 0;
   }
 }
 
-// Mock function for development
-export async function getMockTokenBalance(): Promise<number> {
-  // Simulate different token amounts for testing
-  const mockBalances = [0, 50, 150, 1500, 15000];
-  const randomBalance = mockBalances[Math.floor(Math.random() * mockBalances.length)];
+// Determine roles based on token amount
+export function getRolesByTokenAmount(tokenAmount: number): string[] {
+  const roles: string[] = [];
   
-  console.log(`🎭 Mock balance generated: ${randomBalance} TR_WAL`);
-  return randomBalance;
+  if (tokenAmount >= ROLE_THRESHOLDS.WHALE) {
+    roles.push("Whale");
+  } else if (tokenAmount >= ROLE_THRESHOLDS.SHARK) {
+    roles.push("Shark");
+  } else if (tokenAmount >= ROLE_THRESHOLDS.DOLPHIN) {
+    roles.push("Dolphin");
+  }
+  
+  return roles;
 }
 
-export function determineEligibleRoles(balance: number): DiscordRole[] {
+// Get role info with emojis
+export function getRoleInfo(tokenAmount: number): RoleInfo | null {
+  if (tokenAmount >= ROLE_THRESHOLDS.WHALE) {
+    return { name: "Whale", emoji: "🐳", threshold: ROLE_THRESHOLDS.WHALE };
+  } else if (tokenAmount >= ROLE_THRESHOLDS.SHARK) {
+    return { name: "Shark", emoji: "🦈", threshold: ROLE_THRESHOLDS.SHARK };
+  } else if (tokenAmount >= ROLE_THRESHOLDS.DOLPHIN) {
+    return { name: "Dolphin", emoji: "🐬", threshold: ROLE_THRESHOLDS.DOLPHIN };
+  }
+  
+  return null;
+}
+
+// Get all available roles
+export function getAllRoles(): RoleInfo[] {
+  return [
+    { name: "Dolphin", emoji: "🐬", threshold: ROLE_THRESHOLDS.DOLPHIN },
+    { name: "Shark", emoji: "🦈", threshold: ROLE_THRESHOLDS.SHARK },
+    { name: "Whale", emoji: "🐳", threshold: ROLE_THRESHOLDS.WHALE },
+  ];
+}
+
+export function determineEligibleRoles(balance: number) {
   return DISCORD_ROLES.filter(role => balance >= role.requiredTokens);
 }
 
-export function getHighestRole(balance: number): DiscordRole | null {
+export function getHighestRole(balance: number) {
   const eligibleRoles = determineEligibleRoles(balance);
   if (eligibleRoles.length === 0) return null;
   
@@ -58,73 +103,4 @@ export function getHighestRole(balance: number): DiscordRole | null {
   return eligibleRoles.reduce((highest, current) => 
     current.requiredTokens > highest.requiredTokens ? current : highest
   );
-}
-
-// Get all objects of a specific type
-export async function getObjectsOfType(suiClient: SuiClient, address: string, objectType: string) {
-  try {
-    const response = await suiClient.getOwnedObjects({
-      owner: address,
-      filter: {
-        MatchAll: [
-          { StructType: TR_WAL_TYPE }
-        ]
-      },
-      options: {
-        showType: true,
-        showContent: true,
-        showDisplay: true,
-      }
-    });
-
-    return response.data.filter((obj: any) => obj.data?.type === objectType);
-  } catch (error) {
-    console.error('Error fetching objects:', error);
-    return [];
-  }
-}
-
-export async function checkOwnedTokens(suiClient: SuiClient, address: string): Promise<TokenBalance[]> {
-  try {
-    // Get owned objects with the specific type - using proper type filter
-    const { data: objects } = await suiClient.getOwnedObjects({
-      owner: address,
-      filter: {
-        MatchAll: [
-          { StructType: TR_WAL_TYPE }
-        ]
-      },
-      options: {
-        showContent: true,
-      }
-    });
-
-    return objects.map(obj => {
-      // Extract balance from object content safely
-      let balance = 0;
-      if (obj.data?.content?.dataType === "moveObject") {
-        const fields = obj.data.content.fields as { balance?: string };
-        balance = fields.balance ? Number(fields.balance) / TOKEN_DECIMALS : 0;
-      }
-      
-      return {
-        objectId: obj.data?.objectId || "",
-        balance
-      };
-    });
-  } catch (error) {
-    console.error("Error checking owned tokens:", error);
-    return [];
-  }
-}
-
-export function getRolesByTokenAmount(tokenAmount: number): string[] {
-  // Sort roles by required tokens in ascending order
-  const sortedRoles = [...DISCORD_ROLES].sort((a, b) => a.requiredTokens - b.requiredTokens);
-  
-  // Determine which roles the user qualifies for
-  const qualifiedRoles = sortedRoles.filter(role => tokenAmount >= role.requiredTokens);
-  
-  // Return the role IDs
-  return qualifiedRoles.map(role => role.id);
 } 

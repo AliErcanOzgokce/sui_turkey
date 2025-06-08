@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { AuthState, UserProfile } from "../types";
 import { verifyJWT, generateJWT } from "../services/discordService";
-import { findUserByDiscordId, createOrUpdateUser } from "../services/mongodb";
+import { findUserByDiscordId, createOrUpdateUser } from "../services/apiService";
 
 // Initial state
 const initialState: AuthState = {
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) {
       const decoded = verifyJWT(token);
       if (decoded) {
-        // Fetch user data from DB
+        // Fetch user data from real API
         findUserByDiscordId(decoded.discordId)
           .then((user) => {
             if (user) {
@@ -45,15 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } else {
               // Token valid but user not found, log out
               localStorage.removeItem("auth_token");
+              setAuthState(initialState);
             }
           })
           .catch((err) => {
-            console.error("Error fetching user:", err);
+            console.error("Error fetching user from API:", err);
             localStorage.removeItem("auth_token");
+            setAuthState(initialState);
           });
       } else {
         // Invalid token, remove it
         localStorage.removeItem("auth_token");
+        setAuthState(initialState);
       }
     }
   }, []);
@@ -94,7 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Update local storage
       localStorage.setItem("auth_token", newToken);
     } catch (error) {
-      console.error("Error updating user:", error);
+      console.error("Error updating user via API:", error);
+      throw error;
     }
   };
 
@@ -105,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Hook to use the auth context
+// Custom hook to use auth context
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
