@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/AuthContext";
-import { exchangeCodeForToken, generateJWT } from "../services/discordService";
+import { apiService } from "../services/apiService";
+import { generateJWT } from "../services/discordService";
 
 export function DiscordCallback() {
   const [searchParams] = useSearchParams();
@@ -29,11 +30,11 @@ export function DiscordCallback() {
 
       try {
         // Exchange code for token and user data via API
-        const authResult = await exchangeCodeForToken(code);
+        const authResult = await apiService.processDiscordCallback(code);
         
-        console.log('🔍 Discord OAuth Result:', authResult);
-        console.log('🔍 User data:', authResult.user);
-        console.log('🔍 User discordId:', authResult.user?.discordId);
+        if (!authResult.success || !authResult.user) {
+          throw new Error('Failed to authenticate with Discord');
+        }
         
         // Generate JWT token for frontend
         const jwtToken = generateJWT(authResult.user);
