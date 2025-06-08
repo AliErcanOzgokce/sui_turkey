@@ -31,10 +31,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "app/index.html": {
-      "maxDuration": 10
-    }
-  }
+  ]
 } 
