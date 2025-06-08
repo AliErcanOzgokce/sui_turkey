@@ -18,6 +18,8 @@ class ApiService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -27,10 +29,16 @@ class ApiService {
     };
 
     try {
+      console.log(`📤 API Request config:`, { url, method: config.method, headers: config.headers });
+      
       const response = await fetch(url, config);
+      
+      console.log(`📥 API Response:`, { status: response.status, statusText: response.statusText, ok: response.ok });
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`❌ API Error Response:`, errorText);
+        
         let errorMessage = `HTTP ${response.status}`;
         
         try {
@@ -44,6 +52,7 @@ class ApiService {
       }
 
       const data = await response.json();
+      console.log(`✅ API Success Response:`, data);
       return data;
     } catch (error) {
       console.error(`❌ API Error: ${options.method || 'GET'} ${url}`, error);
