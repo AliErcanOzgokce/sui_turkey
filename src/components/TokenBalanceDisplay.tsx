@@ -4,12 +4,14 @@ import { DISCORD_ROLES } from "../services/tokenService";
 import { roleService } from "../services/roleService";
 import { useState } from "react";
 import { useAuth } from "../hooks/AuthContext";
+import { triggerBalanceCheck } from "../services/apiService";
 
 export function TokenBalanceDisplay() {
   const currentAccount = useCurrentAccount();
-  const { balance, isLoading, error } = useTokenBalance();
+  const { balance, addressBalances, isLoading, error, manualRefresh, linkedAddressesCount } = useTokenBalance();
   const { authState } = useAuth();
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [roleUpdateMessage, setRoleUpdateMessage] = useState<string | null>(null);
   const [roleUpdateError, setRoleUpdateError] = useState<string | null>(null);
   
@@ -18,6 +20,10 @@ export function TokenBalanceDisplay() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
     });
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 8)}...${address.slice(-8)}`;
   };
 
   const handleUpdateRoles = async () => {
@@ -55,11 +61,36 @@ export function TokenBalanceDisplay() {
       setIsUpdatingRoles(false);
     }
   };
+
+  const handleRefreshBalance = async () => {
+    setIsRefreshing(true);
+    try {
+      await manualRefresh();
+    } catch (error) {
+      console.error('Failed to refresh balance:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleTriggerServerBalanceCheck = async () => {
+    try {
+      await triggerBalanceCheck();
+      setRoleUpdateMessage('Server balance check triggered successfully');
+      // Refresh our local balance after server check
+      setTimeout(() => {
+        manualRefresh();
+      }, 2000);
+    } catch (error) {
+      setRoleUpdateError(`Failed to trigger server balance check: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
   
-  if (!currentAccount) {
+  if (!authState.user?.suiAddresses || authState.user.suiAddresses.length === 0) {
     return (
       <div className="text-center text-gray-400 fade-in">
-        No wallet connected
+        <p>No wallets linked to your account</p>
+        <p className="text-sm mt-2">Link a wallet in the previous step</p>
       </div>
     );
   }
@@ -68,28 +99,75 @@ export function TokenBalanceDisplay() {
     return (
       <div className="text-center space-y-4 fade-in">
         <div className="spinner mx-auto"></div>
-        <p className="text-gray-400 text-sm">Loading balance...</p>
+        <p className="text-gray-400 text-sm">Loading balances from {linkedAddressesCount} wallet{linkedAddressesCount > 1 ? 's' : ''}...</p>
       </div>
     );
   }
   
   if (error) {
     return (
-      <div className="text-center fade-in">
+      <div className="text-center fade-in space-y-3">
         <div className="badge-error">Error: {error.message}</div>
+        <button
+          onClick={handleRefreshBalance}
+          disabled={isRefreshing}
+          className="text-sm text-indigo-400 hover:text-indigo-300"
+        >
+          {isRefreshing ? 'Refreshing...' : 'Try Again'}
+        </button>
       </div>
     );
   }
   
   return (
     <div className="space-y-6 fade-in">
-      {/* Balance */}
+      {/* Total Balance */}
       <div className="balance-display">
-        <p className="text-4xl font-bold text-white mb-2">
-          {formatBalance(balance)}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-4xl font-bold text-white">
+            {formatBalance(balance)}
+          </p>
+          <button
+            onClick={handleRefreshBalance}
+            disabled={isRefreshing || isLoading}
+            className="text-gray-400 hover:text-white transition-colors text-sm"
+            title="Refresh balance"
+          >
+            {isRefreshing ? '🔄' : '↻'}
+          </button>
+        </div>
+        <p className="text-gray-300 text-sm">Total TR_WAL Tokens</p>
+        <p className="text-gray-400 text-xs mt-1">
+          Across {linkedAddressesCount} wallet{linkedAddressesCount > 1 ? 's' : ''}
         </p>
-        <p className="text-gray-300 text-sm">TR_WAL Tokens</p>
       </div>
+
+      {/* Address Breakdown */}
+      {linkedAddressesCount > 1 && Object.keys(addressBalances).length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-gray-300 text-center">Wallet Breakdown</h3>
+          <div className="space-y-2">
+            {Object.entries(addressBalances).map(([address, addressBalance]) => (
+              <div
+                key={address}
+                className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700"
+              >
+                <div className="flex items-center space-x-3">
+                  <span className="text-xs font-mono text-gray-300">
+                    {formatAddress(address)}
+                  </span>
+                  {address === currentAccount?.address && (
+                    <span className="badge badge-success text-xs">Current</span>
+                  )}
+                </div>
+                <span className="text-sm font-medium text-white">
+                  {formatBalance(addressBalance)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Roles */}
       <div className="space-y-4">
@@ -135,20 +213,32 @@ export function TokenBalanceDisplay() {
           })}
         </div>
 
-        <button
-          onClick={handleUpdateRoles}
-          disabled={isUpdatingRoles}
-          className="discord-btn w-full"
-        >
-          {isUpdatingRoles ? (
-            <span className="flex items-center justify-center">
-              <div className="spinner mr-3"></div>
-              Updating Marine Roles...
-            </span>
-          ) : (
-            'Update Discord Roles'
+        <div className="space-y-3">
+          <button
+            onClick={handleUpdateRoles}
+            disabled={isUpdatingRoles}
+            className="discord-btn w-full"
+          >
+            {isUpdatingRoles ? (
+              <span className="flex items-center justify-center">
+                <div className="spinner mr-3"></div>
+                Updating Marine Roles...
+              </span>
+            ) : (
+              'Update Discord Roles'
+            )}
+          </button>
+
+          {/* Server Balance Check (Development/Testing) */}
+          {process.env.NODE_ENV === 'development' && (
+            <button
+              onClick={handleTriggerServerBalanceCheck}
+              className="text-sm text-gray-400 hover:text-gray-300 w-full py-2 border border-gray-700 rounded-lg"
+            >
+              Trigger Server Balance Check
+            </button>
           )}
-        </button>
+        </div>
 
         {/* Messages */}
         {roleUpdateMessage && (

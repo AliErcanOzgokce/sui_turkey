@@ -4,9 +4,10 @@ export interface User {
   discordUsername: string;
   discordAvatar?: string;
   email?: string;
-  suiAddress?: string;
+  suiAddresses: string[];
   roles: string[];
   tokenBalance: number;
+  lastBalanceCheck?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }

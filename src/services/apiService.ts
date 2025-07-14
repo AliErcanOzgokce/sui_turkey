@@ -111,8 +111,31 @@ class ApiService {
     });
   }
 
+  // Wallet management
   async linkWallet(discordId: string, suiAddress: string): Promise<UserProfile> {
     const response = await this.makeRequest<UserResponse>('/api/link-wallet', {
+      method: 'POST',
+      body: JSON.stringify({
+        discordId,
+        suiAddress,
+      }),
+    });
+    return response.user;
+  }
+
+  async addWallet(discordId: string, suiAddress: string): Promise<UserProfile> {
+    const response = await this.makeRequest<UserResponse>('/api/add-wallet', {
+      method: 'POST',
+      body: JSON.stringify({
+        discordId,
+        suiAddress,
+      }),
+    });
+    return response.user;
+  }
+
+  async removeWallet(discordId: string, suiAddress: string): Promise<UserProfile> {
+    const response = await this.makeRequest<UserResponse>('/api/remove-wallet', {
       method: 'POST',
       body: JSON.stringify({
         discordId,
@@ -138,6 +161,12 @@ class ApiService {
     return response.users;
   }
 
+  async triggerBalanceCheck(): Promise<{ success: boolean; message: string }> {
+    return this.makeRequest('/api/trigger-balance-check', {
+      method: 'POST',
+    });
+  }
+
   // Health check
   async checkHealth(): Promise<boolean> {
     try {
@@ -160,4 +189,9 @@ export const apiService = new ApiService();
 // Export individual functions for backward compatibility
 export const findUserByDiscordId = (discordId: string) => apiService.findUserByDiscordId(discordId);
 export const createOrUpdateUser = (userData: Partial<UserProfile>) => apiService.createOrUpdateUser(userData);
-export const updateUserTokenBalance = (discordId: string, tokenBalance: number) => apiService.updateUserTokenBalance(discordId, tokenBalance); 
+export const updateUserTokenBalance = (discordId: string, tokenBalance: number) => apiService.updateUserTokenBalance(discordId, tokenBalance);
+
+// Export new functions
+export const addWallet = (discordId: string, suiAddress: string) => apiService.addWallet(discordId, suiAddress);
+export const removeWallet = (discordId: string, suiAddress: string) => apiService.removeWallet(discordId, suiAddress);
+export const triggerBalanceCheck = () => apiService.triggerBalanceCheck(); 

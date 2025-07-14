@@ -3,7 +3,8 @@ export interface UserProfile {
   discordUsername: string;
   discordAvatar: string | null;
   email?: string;
-  suiAddress: string | null;
+  suiAddress?: string | null; // Backward compatibility
+  suiAddresses: string[];
   roles: string[];
   tokenBalance?: number;
   createdAt: Date;

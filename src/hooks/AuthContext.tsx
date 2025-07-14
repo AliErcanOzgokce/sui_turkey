@@ -1,7 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { AuthState, UserProfile } from "../types";
 import { verifyJWT, generateJWT } from "../services/discordService";
-import { findUserByDiscordId, createOrUpdateUser } from "../services/apiService";
+import { findUserByDiscordId, createOrUpdateUser, addWallet, removeWallet } from "../services/apiService";
 
 // Initial state
 const initialState: AuthState = {
@@ -16,11 +16,15 @@ export const AuthContext = createContext<{
   login: (token: string, user: UserProfile) => void;
   logout: () => void;
   updateUser: (userData: Partial<UserProfile>) => Promise<void>;
+  addUserWallet: (suiAddress: string) => Promise<void>;
+  removeUserWallet: (suiAddress: string) => Promise<void>;
 }>({
   authState: initialState,
   login: () => {},
   logout: () => {},
   updateUser: async () => {},
+  addUserWallet: async () => {},
+  removeUserWallet: async () => {},
 });
 
 // Provider component
@@ -102,8 +106,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addUserWallet = async (suiAddress: string) => {
+    if (!authState.user) return;
+
+    try {
+      const updatedUser = await addWallet(authState.user.discordId, suiAddress);
+
+      // Generate a new token with updated data
+      const newToken = generateJWT(updatedUser);
+
+      // Update state
+      setAuthState({
+        isAuthenticated: true,
+        user: updatedUser,
+        token: newToken,
+      });
+
+      // Update local storage
+      localStorage.setItem("auth_token", newToken);
+    } catch (error) {
+      console.error("Error adding wallet via API:", error);
+      throw error;
+    }
+  };
+
+  const removeUserWallet = async (suiAddress: string) => {
+    if (!authState.user) return;
+
+    try {
+      const updatedUser = await removeWallet(authState.user.discordId, suiAddress);
+
+      // Generate a new token with updated data
+      const newToken = generateJWT(updatedUser);
+
+      // Update state
+      setAuthState({
+        isAuthenticated: true,
+        user: updatedUser,
+        token: newToken,
+      });
+
+      // Update local storage
+      localStorage.setItem("auth_token", newToken);
+    } catch (error) {
+      console.error("Error removing wallet via API:", error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ authState, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ 
+      authState, 
+      login, 
+      logout, 
+      updateUser, 
+      addUserWallet,
+      removeUserWallet 
+    }}>
       {children}
     </AuthContext.Provider>
   );

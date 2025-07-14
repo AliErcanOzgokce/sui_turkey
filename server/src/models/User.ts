@@ -22,11 +22,10 @@ const userSchema = new Schema<UserDocument>({
     type: String,
     default: null
   },
-  suiAddress: {
+  suiAddresses: [{
     type: String,
-    default: null,
     index: true
-  },
+  }],
   roles: [{
     type: String
   }],
@@ -34,6 +33,10 @@ const userSchema = new Schema<UserDocument>({
     type: Number,
     default: 0,
     min: 0
+  },
+  lastBalanceCheck: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,

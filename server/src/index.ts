@@ -6,6 +6,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { Client, GatewayIntentBits, Role } from 'discord.js';
 import mongoService from './services/mongoService';
+import cronService from './services/cronService';
 import { RoleConfig, DiscordUser, AuthData, TokenBalanceData } from './types';
 import logger from './logger';
 
@@ -64,6 +65,9 @@ async function initializeDatabase(): Promise<void> {
 client.once('ready', () => {
   if (client.user) {
     logger.info(`🤖 Discord bot logged in as ${client.user.tag}`);
+    
+    // Set Discord client for cron service after bot is ready
+    cronService.setDiscordClient(client);
   }
 });
 
@@ -127,10 +131,25 @@ app.get('/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: mongoService.isConnectedToMongo(),
-    discord: client.isReady()
+    discord: client.isReady(),
+    cronStatus: cronService.isBalanceCheckRunning()
   };
   
   res.json(health);
+});
+
+// Manual balance check trigger (for testing)
+app.post('/api/trigger-balance-check', async (req: Request, res: Response) => {
+  try {
+    await cronService.triggerBalanceCheck();
+    res.json({ success: true, message: 'Balance check triggered successfully' });
+  } catch (error) {
+    logger.error('❌ Manual balance check error:', error);
+    res.status(500).json({ 
+      error: 'Failed to trigger balance check',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 });
 
 // Discord OAuth callback
@@ -205,7 +224,7 @@ app.post('/api/discord/callback', async (req: Request, res: Response) => {
         discordUsername: user.discordUsername,
         discordAvatar: user.discordAvatar,
         email: user.email,
-        suiAddress: user.suiAddress,
+        suiAddresses: user.suiAddresses || [],
         tokenBalance: user.tokenBalance,
         roles: user.roles
       },
@@ -221,7 +240,85 @@ app.post('/api/discord/callback', async (req: Request, res: Response) => {
   }
 });
 
-// Link Sui wallet
+// Add Sui wallet to user
+app.post('/api/add-wallet', async (req: Request, res: Response) => {
+  try {
+    const { discordId, suiAddress } = req.body;
+
+    if (!discordId || !suiAddress) {
+      return res.status(400).json({ error: 'Discord ID and Sui address are required' });
+    }
+
+    logger.info(`➕ Adding wallet for Discord ID: ${discordId}, Sui Address: ${suiAddress}`);
+
+    const user = await mongoService.addSuiAddressToUser(discordId, suiAddress);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    logger.info(`✅ Wallet added successfully for ${user.discordUsername}`);
+
+    res.json({
+      success: true,
+      user: {
+        discordId: user.discordId,
+        discordUsername: user.discordUsername,
+        suiAddresses: user.suiAddresses,
+        tokenBalance: user.tokenBalance,
+        roles: user.roles
+      }
+    });
+
+  } catch (error) {
+    logger.error('❌ Add wallet error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Remove Sui wallet from user
+app.post('/api/remove-wallet', async (req: Request, res: Response) => {
+  try {
+    const { discordId, suiAddress } = req.body;
+
+    if (!discordId || !suiAddress) {
+      return res.status(400).json({ error: 'Discord ID and Sui address are required' });
+    }
+
+    logger.info(`➖ Removing wallet for Discord ID: ${discordId}, Sui Address: ${suiAddress}`);
+
+    const user = await mongoService.removeSuiAddressFromUser(discordId, suiAddress);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    logger.info(`✅ Wallet removed successfully for ${user.discordUsername}`);
+
+    res.json({
+      success: true,
+      user: {
+        discordId: user.discordId,
+        discordUsername: user.discordUsername,
+        suiAddresses: user.suiAddresses,
+        tokenBalance: user.tokenBalance,
+        roles: user.roles
+      }
+    });
+
+  } catch (error) {
+    logger.error('❌ Remove wallet error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Legacy endpoint for backward compatibility
 app.post('/api/link-wallet', async (req: Request, res: Response) => {
   try {
     const { discordId, suiAddress } = req.body;
@@ -232,19 +329,14 @@ app.post('/api/link-wallet', async (req: Request, res: Response) => {
 
     logger.info(`🔗 Linking wallet for Discord ID: ${discordId}, Sui Address: ${suiAddress}`);
 
-    // Check if Sui address is already linked to another user
-    const existingUser = await mongoService.findUserBySuiAddress(suiAddress);
-    if (existingUser && existingUser.discordId !== discordId) {
-      return res.status(409).json({ 
-        error: 'This Sui address is already linked to another Discord account' 
-      });
+    // Check if this is the user's first address
+    const existingUser = await mongoService.findUserByDiscordId(discordId);
+    if (existingUser && existingUser.suiAddresses && existingUser.suiAddresses.length > 0) {
+      // User already has addresses, use add-wallet instead
+      return res.redirect(307, '/api/add-wallet');
     }
 
-    // Update user with Sui address
-    const user = await mongoService.createOrUpdateUser({
-      discordId,
-      suiAddress
-    });
+    const user = await mongoService.addSuiAddressToUser(discordId, suiAddress);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -257,7 +349,8 @@ app.post('/api/link-wallet', async (req: Request, res: Response) => {
       user: {
         discordId: user.discordId,
         discordUsername: user.discordUsername,
-        suiAddress: user.suiAddress,
+        suiAddress: user.suiAddresses?.[0] || null, // For backward compatibility
+        suiAddresses: user.suiAddresses,
         tokenBalance: user.tokenBalance,
         roles: user.roles
       }
@@ -341,7 +434,8 @@ app.get('/api/user/:discordId', async (req: Request, res: Response) => {
         discordUsername: user.discordUsername,
         discordAvatar: user.discordAvatar,
         email: user.email,
-        suiAddress: user.suiAddress,
+        suiAddress: user.suiAddresses?.[0] || null, // For backward compatibility
+        suiAddresses: user.suiAddresses || [],
         tokenBalance: user.tokenBalance,
         roles: user.roles,
         createdAt: user.createdAt,
@@ -420,10 +514,14 @@ async function startServer(): Promise<void> {
 
     await client.login(process.env.DISCORD_BOT_TOKEN);
 
+    // Start cron service for automated balance checks
+    cronService.startBalanceCheckCron();
+
     // Start Express server
     app.listen(PORT, () => {
       logger.info(`🚀 Server running on port ${PORT}`);
       logger.info(`🌊 Marine role system active`);
+      logger.info(`⏰ Automated balance check system active`);
     });
 
   } catch (error) {

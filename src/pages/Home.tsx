@@ -15,21 +15,21 @@ export function Home() {
   // Step completion logic
   const isDiscordConnected = authState.isAuthenticated && authState.user;
   const isWalletConnected = currentAccount?.address;
-  const isWalletLinked = isDiscordConnected && authState.user?.suiAddress === currentAccount?.address;
+  const hasLinkedWallets = isDiscordConnected && authState.user?.suiAddresses && authState.user.suiAddresses.length > 0;
 
   // Auto-advance steps
   useEffect(() => {
     if (isDiscordConnected && currentStep === 1) {
       setCurrentStep(2);
     }
-    if (isWalletLinked && currentStep === 2) {
+    if (hasLinkedWallets && currentStep === 2) {
       setCurrentStep(3);
     }
-  }, [isDiscordConnected, isWalletLinked, currentStep]);
+  }, [isDiscordConnected, hasLinkedWallets, currentStep]);
 
   const steps = [
     { id: 1, title: 'Discord', completed: isDiscordConnected },
-    { id: 2, title: 'Wallet', completed: isWalletLinked },
+    { id: 2, title: 'Wallet', completed: hasLinkedWallets },
     { id: 3, title: 'Roles', completed: balance > 0 }
   ];
 
@@ -79,11 +79,11 @@ export function Home() {
           {/* Step 2: Wallet */}
           {currentStep === 2 && (
             <div className="text-center space-y-6">
-              <h2 className="text-xl font-semibold">Connect Wallet</h2>
+              <h2 className="text-xl font-semibold">Manage Wallets</h2>
               
               {!isWalletConnected ? (
                 <div className="space-y-4">
-                  <p className="text-gray-400 text-sm">Connect your Sui wallet</p>
+                  <p className="text-gray-400 text-sm">Connect your Sui wallet to link it to your account</p>
                   <ConnectButton />
                 </div>
               ) : (
@@ -98,8 +98,18 @@ export function Home() {
           {/* Step 3: Roles */}
           {currentStep === 3 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-center">Token Balance</h2>
+              <h2 className="text-xl font-semibold text-center">Token Balance & Roles</h2>
               <TokenBalanceDisplay />
+              
+              {/* Additional wallet management for step 3 */}
+              {isWalletConnected && (
+                <div className="pt-4 border-t border-gray-800">
+                  <h3 className="text-sm font-medium text-gray-300 text-center mb-3">
+                    Wallet Management
+                  </h3>
+                  <LinkWallet />
+                </div>
+              )}
             </div>
           )}
 
@@ -126,7 +136,7 @@ export function Home() {
 
             <button
               onClick={() => setCurrentStep(Math.min(3, currentStep + 1))}
-              disabled={currentStep === 3 || (currentStep === 1 && !isDiscordConnected) || (currentStep === 2 && !isWalletLinked)}
+              disabled={currentStep === 3 || (currentStep === 1 && !isDiscordConnected) || (currentStep === 2 && !hasLinkedWallets)}
               className="text-indigo-400 disabled:opacity-30 hover:text-indigo-300 transition-colors"
             >
               Next →

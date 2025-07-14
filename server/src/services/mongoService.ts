@@ -83,7 +83,7 @@ class MongoService {
       }
 
       logger.debug(`🔍 Finding user by Sui address: ${suiAddress}`);
-      const user = await User.findOne({ suiAddress }).exec();
+      const user = await User.findOne({ suiAddresses: suiAddress }).exec();
       
       if (user) {
         logger.debug(`✅ User found: ${user.discordUsername}`);
@@ -94,6 +94,70 @@ class MongoService {
       return user;
     } catch (error) {
       logger.error('❌ Error finding user by Sui address:', error);
+      throw error;
+    }
+  }
+
+  async addSuiAddressToUser(discordId: string, suiAddress: string): Promise<UserDocument | null> {
+    try {
+      if (!this.isConnected) {
+        throw new Error('MongoDB not connected');
+      }
+
+      // First check if this address is already used by another user
+      const existingUser = await this.findUserBySuiAddress(suiAddress);
+      if (existingUser && existingUser.discordId !== discordId) {
+        throw new Error('This Sui address is already linked to another Discord account');
+      }
+
+      logger.info(`➕ Adding Sui address ${suiAddress} to user: ${discordId}`);
+      
+      const user = await User.findOneAndUpdate(
+        { discordId },
+        { 
+          $addToSet: { suiAddresses: suiAddress },
+          updatedAt: new Date()
+        },
+        { new: true, runValidators: true }
+      ).exec();
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      logger.info(`✅ Sui address added to user: ${user.discordUsername}`);
+      return user;
+    } catch (error) {
+      logger.error('❌ Error adding Sui address to user:', error);
+      throw error;
+    }
+  }
+
+  async removeSuiAddressFromUser(discordId: string, suiAddress: string): Promise<UserDocument | null> {
+    try {
+      if (!this.isConnected) {
+        throw new Error('MongoDB not connected');
+      }
+
+      logger.info(`➖ Removing Sui address ${suiAddress} from user: ${discordId}`);
+      
+      const user = await User.findOneAndUpdate(
+        { discordId },
+        { 
+          $pull: { suiAddresses: suiAddress },
+          updatedAt: new Date()
+        },
+        { new: true }
+      ).exec();
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      logger.info(`✅ Sui address removed from user: ${user.discordUsername}`);
+      return user;
+    } catch (error) {
+      logger.error('❌ Error removing Sui address from user:', error);
       throw error;
     }
   }
@@ -140,7 +204,11 @@ class MongoService {
       
       const user = await User.findOneAndUpdate(
         { discordId },
-        { tokenBalance, updatedAt: new Date() },
+        { 
+          tokenBalance, 
+          lastBalanceCheck: new Date(),
+          updatedAt: new Date() 
+        },
         { new: true }
       ).exec();
 
@@ -174,6 +242,25 @@ class MongoService {
       return user;
     } catch (error) {
       logger.error('❌ Error updating user roles:', error);
+      throw error;
+    }
+  }
+
+  async getUsersForBalanceCheck(): Promise<UserDocument[]> {
+    try {
+      if (!this.isConnected) {
+        throw new Error('MongoDB not connected');
+      }
+
+      logger.debug('📋 Fetching users with Sui addresses for balance check');
+      const users = await User.find({ 
+        suiAddresses: { $exists: true, $not: { $size: 0 } }
+      }).exec();
+      
+      logger.debug(`✅ Found ${users.length} users with addresses`);
+      return users;
+    } catch (error) {
+      logger.error('❌ Error fetching users for balance check:', error);
       throw error;
     }
   }
