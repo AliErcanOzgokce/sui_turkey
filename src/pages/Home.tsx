@@ -73,7 +73,7 @@ export function Home() {
         
         {/* Header */}
         <div className="text-center mb-8 fade-in">
-          <h1 className="text-3xl font-bold mb-2">Sui Turkey</h1>
+          <h1 className="text-3xl font-bold mb-2">Sui Türkiye</h1>
           
           {/* Steps */}
           <div className="flex justify-center items-center space-x-4 mt-6">
