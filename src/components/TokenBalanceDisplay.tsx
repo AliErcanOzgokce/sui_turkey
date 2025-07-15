@@ -4,14 +4,16 @@ import { roleService } from "../services/roleService";
 import { useState } from "react";
 import { useAuth } from "../hooks/AuthContext";
 import { triggerBalanceCheck } from "../services/apiService";
-import { ManageWalletsModal } from "./ManageWalletsModal";
 
-export function TokenBalanceDisplay() {
+interface TokenBalanceDisplayProps {
+  onManageWallets: () => void;
+}
+
+export function TokenBalanceDisplay({ onManageWallets }: TokenBalanceDisplayProps) {
   const { balance, isLoading, error, manualRefresh, linkedAddressesCount } = useTokenBalance();
   const { authState } = useAuth();
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isManageWalletsOpen, setIsManageWalletsOpen] = useState(false);
   const [roleUpdateMessage, setRoleUpdateMessage] = useState<string | null>(null);
   const [roleUpdateError, setRoleUpdateError] = useState<string | null>(null);
   
@@ -125,7 +127,7 @@ export function TokenBalanceDisplay() {
           </p>
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setIsManageWalletsOpen(true)}
+              onClick={onManageWallets}
               className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"
               title="Manage wallets"
             >
@@ -232,11 +234,7 @@ export function TokenBalanceDisplay() {
         )}
       </div>
 
-      {/* Manage Wallets Modal */}
-      <ManageWalletsModal 
-        isOpen={isManageWalletsOpen}
-        onClose={() => setIsManageWalletsOpen(false)}
-      />
+      
     </div>
   );
 } 

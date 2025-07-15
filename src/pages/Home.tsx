@@ -3,6 +3,7 @@ import { ConnectButton, useCurrentAccount, useAccounts } from "@mysten/dapp-kit"
 import { ConnectDiscord } from "../components/ConnectDiscord";
 import { LinkWallet } from "../components/LinkWallet";
 import { TokenBalanceDisplay } from "../components/TokenBalanceDisplay";
+import { ManageWalletsPage } from "../components/ManageWalletsPage";
 import { useAuth } from "../hooks/AuthContext";
 import { useTokenBalance } from "../hooks/useTokenBalance";
 
@@ -62,7 +63,8 @@ export function Home() {
   const steps = [
     { id: 1, title: 'Discord', completed: isDiscordConnected },
     { id: 2, title: 'Wallet', completed: hasLinkedWallets },
-    { id: 3, title: 'Roles', completed: balance > 0 }
+    { id: 3, title: 'Roles', completed: balance > 0 },
+    { id: 4, title: 'Manage', completed: false }
   ];
 
   return (
@@ -149,15 +151,20 @@ export function Home() {
               )}
               
               {/* Show balance display only if no critical wallet issues */}
-              {!walletStatusWarning && <TokenBalanceDisplay />}
+              {!walletStatusWarning && <TokenBalanceDisplay onManageWallets={() => setCurrentStep(4)} />}
               
               {/* Show balance display with warning if there are minor issues */}
               {walletStatusWarning && hasLinkedWallets && (
                 <div className="opacity-75">
-                  <TokenBalanceDisplay />
+                  <TokenBalanceDisplay onManageWallets={() => setCurrentStep(4)} />
                 </div>
               )}
             </div>
+          )}
+
+          {/* Step 4: Manage Wallets */}
+          {currentStep === 4 && (
+            <ManageWalletsPage />
           )}
 
           {/* Navigation */}
@@ -182,8 +189,8 @@ export function Home() {
             </div>
 
             <button
-              onClick={() => setCurrentStep(Math.min(3, currentStep + 1))}
-              disabled={currentStep === 3 || (currentStep === 1 && !isDiscordConnected) || (currentStep === 2 && !hasLinkedWallets)}
+              onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+              disabled={currentStep === 4 || (currentStep === 1 && !isDiscordConnected) || (currentStep === 2 && !hasLinkedWallets)}
               className="text-indigo-400 disabled:opacity-30 hover:text-indigo-300 transition-colors"
             >
               Next →
