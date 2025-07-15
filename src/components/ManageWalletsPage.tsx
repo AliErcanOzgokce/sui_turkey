@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAccounts, useCurrentAccount, useDisconnectWallet, useSuiClient } from '@mysten/dapp-kit';
 import { useAuth } from '../hooks/AuthContext';
 import { ConnectButton } from '@mysten/dapp-kit';
+import { getTokenBalance } from '../services/tokenService';
 
 interface WalletAccountBalance {
   address: string;
@@ -43,12 +44,7 @@ export function ManageWalletsPage() {
       try {
         for (const account of accounts) {
           try {
-            const balance = await suiClient.getBalance({
-              owner: account.address,
-              coinType: '0xe1c20d7e8ad6a418f4f14e2b96b5d1eadd2b2c2bcf1b62e0b3d9d3e3f2f1e0d::tr_wal::TR_WAL'
-            });
-            
-            const balanceValue = parseInt(balance.totalBalance) / 1000000;
+            const balanceValue = await getTokenBalance(suiClient, account.address);
             
             setAccountBalances(prev => ({
               ...prev,
@@ -70,13 +66,6 @@ export function ManageWalletsPage() {
             }));
           }
         }
-        
-        const updatedBalances = { ...balances };
-        for (const account of accounts) {
-          updatedBalances[account.address].isLoading = false;
-        }
-        
-        setAccountBalances(updatedBalances);
       } catch (error) {
         console.error('Error loading account balances:', error);
         setError('Failed to load account balances');
