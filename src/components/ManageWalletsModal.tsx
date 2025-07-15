@@ -24,7 +24,6 @@ export function ManageWalletsModal({ isOpen, onClose }: ManageWalletsModalProps)
   const { authState, addUserWallet, removeUserWallet } = useAuth();
   
   const [accountBalances, setAccountBalances] = useState<Record<string, WalletAccountBalance>>({});
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const userLinkedAddresses = authState.user?.suiAddresses || [];
@@ -34,7 +33,6 @@ export function ManageWalletsModal({ isOpen, onClose }: ManageWalletsModalProps)
     if (!isOpen || !accounts.length) return;
 
     const loadAccountBalances = async () => {
-      setIsLoading(true);
       const balances: Record<string, WalletAccountBalance> = {};
 
       for (const account of accounts) {
@@ -74,8 +72,6 @@ export function ManageWalletsModal({ isOpen, onClose }: ManageWalletsModalProps)
       } catch (error) {
         console.error('Error loading account balances:', error);
         setError('Failed to load account balances');
-      } finally {
-        setIsLoading(false);
       }
     };
 

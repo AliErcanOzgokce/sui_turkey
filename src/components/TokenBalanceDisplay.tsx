@@ -1,5 +1,4 @@
 import { useTokenBalance } from "../hooks/useTokenBalance";
-import { useCurrentAccount } from "@mysten/dapp-kit";
 import { DISCORD_ROLES } from "../services/tokenService";
 import { roleService } from "../services/roleService";
 import { useState } from "react";
@@ -8,7 +7,6 @@ import { triggerBalanceCheck } from "../services/apiService";
 import { ManageWalletsModal } from "./ManageWalletsModal";
 
 export function TokenBalanceDisplay() {
-  const currentAccount = useCurrentAccount();
   const { balance, isLoading, error, manualRefresh, linkedAddressesCount } = useTokenBalance();
   const { authState } = useAuth();
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
