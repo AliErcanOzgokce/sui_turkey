@@ -1,172 +1,216 @@
-# 🐋 Sui Turkey Discord Integration
+# Sui Turkey Discord Bot
 
-**Marine-themed Discord role assignment system based on TR_WAL token holdings on Sui blockchain.**
+A comprehensive Discord bot system for the Sui Turkey community featuring token-based role management, multi-wallet support, and automated balance checking.
 
-## ✨ Features
+## 🚀 Features
 
-- 🌊 **Marine Theme**: Dolphin, Shark, and Whale roles based on token holdings
-- 🔗 **Sui Integration**: Real-time TR_WAL token balance checking
-- 🎮 **Discord OAuth2**: Secure Discord authentication
-- 🪙 **Wallet Linking**: Connect Sui wallets to Discord accounts
-- 🤖 **Automated Roles**: Auto-assign Discord roles based on token amounts
-- 📊 **Professional Logging**: Winston-based logging system
-- 🎨 **Modern UI**: Dark theme with glassmorphism effects
+### 🔄 Automated Balance & Role Management
+- **24-hour automated balance checking** (runs daily at 00:00 UTC)
+- **Automatic Discord role assignment** based on TR_WAL token holdings
+- **Multi-wallet balance aggregation** across all linked addresses
+- **Real-time role updates** with comprehensive logging
 
-## 🌊 Marine Role System
+### 👛 Advanced Multi-Wallet Management
+- **Multiple wallet linking** per user account
+- **useAccounts integration** showing all authorized wallets
+- **Individual wallet balance display** for each linked address
+- **Link/Unlink/Disconnect** functionality with UI management
+- **Wallet status monitoring** with automatic reconnection prompts
 
-| Role | Token Requirement | Access |
-|------|------------------|---------|
-| 🐬 **Dolphin** | 100+ TR_WAL | dolphin-cove fun events |
-| 🦈 **Shark** | 1,000+ TR_WAL | shark-den special events |
-| 🐳 **Whale** | 10,000+ TR_WAL | whale-lair VIP access & events |
+### 🎭 Marine-Themed Role System
+- 🐬 **Dolphin**: 100+ TR_WAL tokens
+- 🦈 **Shark**: 1,000+ TR_WAL tokens  
+- 🐳 **Whale**: 10,000+ TR_WAL tokens
 
-## 🚀 Tech Stack
+### 🛡️ Smart Wallet Monitoring
+- **Connection status validation** on page navigation
+- **Automatic disconnect detection** with user prompts
+- **Database synchronization** for wallet linkages
+- **Real-time balance updates** across all interfaces
 
-### Frontend
-- **React 18** with TypeScript
-- **Vite** for fast development
-- **TailwindCSS** for styling
-- **Sui dApp Kit** for blockchain integration
-- **Radix UI** for components
+## 🏗️ Architecture
 
-### Backend
-- **Node.js** with Express
-- **Discord.js** for bot functionality
-- **Winston** for professional logging
-- **MongoDB** simulation with localStorage
+### Backend (Node.js + Express + MongoDB)
+- **RESTful API** endpoints for user and wallet management
+- **Discord Bot integration** with role management
+- **Cron-based automation** for scheduled balance checks
+- **MongoDB data persistence** with optimized schemas
+- **Comprehensive logging** with Winston
+
+### Frontend (React + TypeScript + @mysten/dapp-kit)
+- **Modern React hooks** integration
+- **Sui wallet connectivity** via @mysten/dapp-kit
+- **Real-time UI updates** with state management
+- **Responsive design** with Tailwind CSS
+- **Modal-based wallet management** interface
 
 ## 📦 Installation
 
 ### Prerequisites
 - Node.js 18+
-- Discord Developer Account
-- Sui Wallet
+- MongoDB Atlas account
+- Discord Bot Token
+- Discord Server with role permissions
 
-### 1. Clone Repository
+### Backend Setup
 ```bash
-git clone <repository-url>
-cd sui_turkey
-```
-
-### 2. Install Dependencies
-```bash
-# Frontend
-npm install
-
-# Backend
 cd server
 npm install
 ```
 
-### 3. Environment Setup
-
-#### Frontend (.env)
+Create `server/.env`:
 ```env
-VITE_DISCORD_CLIENT_ID=your_discord_client_id
-VITE_DISCORD_CLIENT_SECRET=your_discord_client_secret
-VITE_DISCORD_REDIRECT_URI=http://localhost:5173/discord/callback
-```
+# MongoDB Configuration
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/sui-turkey
 
-#### Backend (server/.env)
-```env
-DISCORD_BOT_TOKEN=your_bot_token
+# Discord Bot Configuration
+DISCORD_BOT_TOKEN=your_discord_bot_token_here
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
+DISCORD_REDIRECT_URI=http://localhost:5173/discord/callback
+
+# Discord Guild & Role IDs
 GUILD_ID=your_discord_server_id
+DOLPHIN_ROLE_ID=dolphin_role_id
+SHARK_ROLE_ID=shark_role_id
+WHALE_ROLE_ID=whale_role_id
+
+# Optional Configuration
+SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
+NODE_ENV=development
 PORT=3001
-LOG_LEVEL=info
 ```
 
-### 4. Discord Bot Setup
-
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create new application
-3. Create bot and copy token
-4. Enable OAuth2 with `identify` and `guilds.members.read` scopes
-5. Invite bot to your server with `Manage Roles` permission
-
-## 🏃 Running the Project
-
-### Development
+### Frontend Setup
 ```bash
-# Terminal 1 - Frontend
-npm run dev
+# Install dependencies (using pnpm)
+pnpm install
 
-# Terminal 2 - Backend
+# Or with npm
+npm install --legacy-peer-deps
+```
+
+## 🚀 Running the Application
+
+### Start Backend
+```bash
 cd server
-node index.js
+npm run dev
 ```
 
-### URLs
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:3001
-- **Health Check**: http://localhost:3001/api/health
-
-## 🔧 Usage
-
-1. **Connect Discord**: Authenticate with Discord OAuth2
-2. **Link Wallet**: Connect your Sui wallet
-3. **Check Balance**: System automatically checks TR_WAL balance
-4. **Update Roles**: Click "Update Discord Roles" to assign marine roles
-
-## 📁 Project Structure
-
-```
-sui_turkey/
-├── src/                    # Frontend source
-│   ├── components/         # React components
-│   ├── hooks/             # Custom hooks
-│   ├── services/          # API services
-│   └── types/             # TypeScript types
-├── server/                 # Backend source
-│   ├── index.js           # Main server file
-│   ├── logger.js          # Winston configuration
-│   └── logs/              # Log files
-└── public/                # Static assets
+### Start Frontend
+```bash
+pnpm dev
+# or
+npm run dev
 ```
 
-## 🌐 Deployment
+**Access the application:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:3001
+- Health Check: http://localhost:3001/health
 
-### Frontend (Vercel)
-1. Connect GitHub repository to Vercel
-2. Set environment variables
-3. Deploy automatically
+## 🔧 API Endpoints
 
-### Backend (Railway)
-1. Connect GitHub repository to Railway
-2. Set environment variables
-3. Deploy automatically
+### Authentication
+- `POST /api/discord/callback` - Discord OAuth callback
+- `GET /api/user/:discordId` - Get user profile
 
-## 🔒 Security Features
+### Wallet Management
+- `POST /api/add-wallet` - Link new wallet to user
+- `POST /api/remove-wallet` - Unlink wallet from user
+- `POST /api/link-wallet` - Legacy wallet linking (backward compatibility)
 
-- Secure Discord OAuth2 flow
-- JWT token authentication
-- Environment variable protection
-- Rate limiting protection
-- Graceful error handling
+### Role Management
+- `POST /api/update-roles` - Update user roles based on balance
+- `POST /api/trigger-balance-check` - Manual balance check trigger
 
-## 📊 Logging
+### System
+- `GET /health` - System health check with status indicators
 
-Professional logging with Winston:
-- **Console**: Colored real-time logs
-- **Files**: Persistent log storage
-- **Levels**: Error, Warn, Info, Debug
-- **Rotation**: Automatic log file rotation
+## 🎮 User Flow
+
+1. **Discord Connection**: Authenticate with Discord OAuth
+2. **Wallet Linking**: Connect and authorize Sui wallets
+3. **Balance Management**: View aggregated TR_WAL balances
+4. **Role Assignment**: Automatic role updates based on holdings
+5. **Wallet Management**: Use "Manage Wallets" interface for full control
+
+## 🛠️ Technical Features
+
+### Database Schema
+- **User Model**: Supports multiple wallet addresses per user
+- **Unique Constraints**: One address per user restriction
+- **Automatic Timestamps**: Created/updated tracking
+- **Balance Caching**: Last balance check optimization
+
+### Automation System
+- **Cron Scheduling**: Daily balance checks at 00:00 UTC
+- **Rate Limiting**: Discord API protection (200ms delays)
+- **Error Handling**: Comprehensive error logging and recovery
+- **Performance Monitoring**: Balance check statistics
+
+### Security
+- **JWT Authentication**: Secure session management
+- **Address Validation**: Unique wallet address enforcement
+- **Environment Variables**: Secure configuration management
+- **CORS Protection**: Cross-origin request security
+
+## 🧪 Testing
+
+### Manual Balance Check
+```bash
+curl -X POST http://localhost:3001/api/trigger-balance-check
+```
+
+### Health Monitoring
+```bash
+curl http://localhost:3001/health
+```
+
+### Development Features
+- **Auto-balance check**: Runs 10 seconds after server start in development
+- **Debug logging**: Comprehensive console output
+- **Hot reload**: Real-time code updates
+
+## 📊 Monitoring
+
+The system provides comprehensive monitoring through:
+- **Real-time health checks** with database and Discord status
+- **Balance check automation** with success/error counting
+- **User activity logging** with detailed operation tracking
+- **Performance metrics** for optimization insights
+
+## 🔄 Automated Processes
+
+### Daily Balance Synchronization
+1. **Fetch all users** with linked wallet addresses
+2. **Query TR_WAL balances** for each address in parallel
+3. **Aggregate total balance** per user account
+4. **Update Discord roles** based on new balances
+5. **Log all operations** with detailed status reporting
+
+### Real-time Wallet Management
+1. **Monitor wallet connections** on page navigation
+2. **Validate address linkages** against database
+3. **Prompt reconnection** for disconnected wallets
+4. **Synchronize UI state** with backend data
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Create Pull Request
+2. Create a feature branch
+3. Implement changes with proper testing
+4. Submit a pull request with detailed description
 
 ## 📄 License
 
-MIT License - see LICENSE file for details
+This project is licensed under the MIT License.
 
-## 🙋 Support
+## 🆘 Support
 
-For support, join our Discord server or create an issue on GitHub.
-
----
-
-**Made with 💙 for the Sui Turkey Community** 🇹🇷
+For issues and questions:
+- Check the health endpoint: `/health`
+- Review server logs for error details
+- Verify Discord bot permissions and role IDs
+- Confirm MongoDB connection and environment variables

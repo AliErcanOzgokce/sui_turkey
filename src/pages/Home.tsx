@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
+import { ConnectButton, useCurrentAccount, useAccounts } from "@mysten/dapp-kit";
 import { ConnectDiscord } from "../components/ConnectDiscord";
 import { LinkWallet } from "../components/LinkWallet";
 import { TokenBalanceDisplay } from "../components/TokenBalanceDisplay";
@@ -9,13 +9,45 @@ import { useTokenBalance } from "../hooks/useTokenBalance";
 export function Home() {
   const { authState } = useAuth();
   const currentAccount = useCurrentAccount();
+  const accounts = useAccounts();
   const { balance } = useTokenBalance();
   const [currentStep, setCurrentStep] = useState(1);
+  const [walletStatusWarning, setWalletStatusWarning] = useState<string | null>(null);
 
   // Step completion logic
   const isDiscordConnected = authState.isAuthenticated && authState.user;
   const isWalletConnected = currentAccount?.address;
   const hasLinkedWallets = isDiscordConnected && authState.user?.suiAddresses && authState.user.suiAddresses.length > 0;
+
+  // Wallet status check for step 3
+  useEffect(() => {
+    if (currentStep === 3 && isDiscordConnected && authState.user) {
+      const linkedAddresses = authState.user.suiAddresses || [];
+      
+      // Check if user has linked wallets but no current wallet connected
+      if (linkedAddresses.length > 0 && !currentAccount) {
+        setWalletStatusWarning("Your wallet appears to be disconnected. Please reconnect to manage your balances.");
+        return;
+      }
+      
+      // Check if current account is not among linked addresses
+      if (linkedAddresses.length > 0 && currentAccount && !linkedAddresses.includes(currentAccount.address)) {
+        setWalletStatusWarning("Your current wallet is not linked to your account. Link it or switch to a linked wallet.");
+        return;
+      }
+      
+      // Check if user has no available accounts (all disconnected)
+      if (linkedAddresses.length > 0 && accounts.length === 0) {
+        setWalletStatusWarning("All your wallets have been disconnected. Please reconnect at least one wallet.");
+        return;
+      }
+      
+      // Clear warning if everything is fine
+      setWalletStatusWarning(null);
+    } else {
+      setWalletStatusWarning(null);
+    }
+  }, [currentStep, isDiscordConnected, authState.user, currentAccount, accounts]);
 
   // Auto-advance steps
   useEffect(() => {
@@ -99,15 +131,30 @@ export function Home() {
           {currentStep === 3 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-center">Token Balance & Roles</h2>
-              <TokenBalanceDisplay />
               
-              {/* Additional wallet management for step 3 */}
-              {isWalletConnected && (
-                <div className="pt-4 border-t border-gray-800">
-                  <h3 className="text-sm font-medium text-gray-300 text-center mb-3">
-                    Wallet Management
-                  </h3>
-                  <LinkWallet />
+              {/* Wallet Status Warning */}
+              {walletStatusWarning && (
+                <div className="space-y-4">
+                  <div className="badge-error text-center">
+                    {walletStatusWarning}
+                  </div>
+                  
+                  <div className="text-center">
+                    <ConnectButton />
+                    <p className="text-xs text-gray-400 mt-2">
+                      Connected accounts: {accounts.length} | Linked wallets: {authState.user?.suiAddresses?.length || 0}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Show balance display only if no critical wallet issues */}
+              {!walletStatusWarning && <TokenBalanceDisplay />}
+              
+              {/* Show balance display with warning if there are minor issues */}
+              {walletStatusWarning && hasLinkedWallets && (
+                <div className="opacity-75">
+                  <TokenBalanceDisplay />
                 </div>
               )}
             </div>

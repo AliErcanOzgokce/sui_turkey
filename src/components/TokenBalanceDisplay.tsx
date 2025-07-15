@@ -5,13 +5,15 @@ import { roleService } from "../services/roleService";
 import { useState } from "react";
 import { useAuth } from "../hooks/AuthContext";
 import { triggerBalanceCheck } from "../services/apiService";
+import { ManageWalletsModal } from "./ManageWalletsModal";
 
 export function TokenBalanceDisplay() {
   const currentAccount = useCurrentAccount();
-  const { balance, addressBalances, isLoading, error, manualRefresh, linkedAddressesCount } = useTokenBalance();
+  const { balance, isLoading, error, manualRefresh, linkedAddressesCount } = useTokenBalance();
   const { authState } = useAuth();
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isManageWalletsOpen, setIsManageWalletsOpen] = useState(false);
   const [roleUpdateMessage, setRoleUpdateMessage] = useState<string | null>(null);
   const [roleUpdateError, setRoleUpdateError] = useState<string | null>(null);
   
@@ -20,10 +22,6 @@ export function TokenBalanceDisplay() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2
     });
-  };
-
-  const formatAddress = (address: string) => {
-    return `${address.slice(0, 8)}...${address.slice(-8)}`;
   };
 
   const handleUpdateRoles = async () => {
@@ -127,47 +125,29 @@ export function TokenBalanceDisplay() {
           <p className="text-4xl font-bold text-white">
             {formatBalance(balance)}
           </p>
-          <button
-            onClick={handleRefreshBalance}
-            disabled={isRefreshing || isLoading}
-            className="text-gray-400 hover:text-white transition-colors text-sm"
-            title="Refresh balance"
-          >
-            {isRefreshing ? '🔄' : '↻'}
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsManageWalletsOpen(true)}
+              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg transition-colors"
+              title="Manage wallets"
+            >
+              Manage Wallets
+            </button>
+            <button
+              onClick={handleRefreshBalance}
+              disabled={isRefreshing || isLoading}
+              className="text-gray-400 hover:text-white transition-colors text-sm"
+              title="Refresh balance"
+            >
+              {isRefreshing ? '🔄' : '↻'}
+            </button>
+          </div>
         </div>
         <p className="text-gray-300 text-sm">Total TR_WAL Tokens</p>
         <p className="text-gray-400 text-xs mt-1">
           Across {linkedAddressesCount} wallet{linkedAddressesCount > 1 ? 's' : ''}
         </p>
       </div>
-
-      {/* Address Breakdown */}
-      {linkedAddressesCount > 1 && Object.keys(addressBalances).length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium text-gray-300 text-center">Wallet Breakdown</h3>
-          <div className="space-y-2">
-            {Object.entries(addressBalances).map(([address, addressBalance]) => (
-              <div
-                key={address}
-                className="flex items-center justify-between p-3 bg-gray-800 rounded-lg border border-gray-700"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="text-xs font-mono text-gray-300">
-                    {formatAddress(address)}
-                  </span>
-                  {address === currentAccount?.address && (
-                    <span className="badge badge-success text-xs">Current</span>
-                  )}
-                </div>
-                <span className="text-sm font-medium text-white">
-                  {formatBalance(addressBalance)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Roles */}
       <div className="space-y-4">
@@ -253,6 +233,12 @@ export function TokenBalanceDisplay() {
           </div>
         )}
       </div>
+
+      {/* Manage Wallets Modal */}
+      <ManageWalletsModal 
+        isOpen={isManageWalletsOpen}
+        onClose={() => setIsManageWalletsOpen(false)}
+      />
     </div>
   );
 } 
